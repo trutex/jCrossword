@@ -1,0 +1,66 @@
+<html !doctype>
+  <head>
+    <meta charset="utf-8">
+    <title>Crossword</title>
+    <link href="crossword.css" rel="stylesheet" type="text/css">
+    <script src="jquery-1.8.1.min.js"></script>
+    <script src="crossword.js"></script>
+  </head>
+  <body>
+    <div id="divTest"></div>
+    <script>
+        $(function () {
+            var grid = [' @ @ @ @@@ @ @@',
+                        '       @      @',
+                        ' @ @ @ @ @ @ @ ',
+                        '         @     ',
+                        ' @@@ @@@ @ @@@ ',
+                        '      @        ',
+                        '@@ @ @ @ @@@ @ ',
+                        '     @   @     ',
+                        ' @ @@@ @ @ @ @@',
+                        '        @      ',
+                        ' @@@ @ @@@ @@@ ',
+                        '     @         ',
+                        ' @ @ @ @ @ @ @ ',
+                        '@      @       ',
+                        '@@ @ @@@ @ @ @ '];
+            var acrossClues = ['Foolishly edited any line%%INANELY',
+                                'Screen icon, Ms Gardner, met topless celebrity%%AVATAR',
+                                'Charts a dire path for organisation%%HIT PARADE',
+                                'Joint article on deer migrating west%%ANKLE',
+                                'Understated note removed from middle of caption%%SUBTLE',
+                                'Alternatively the navy left in the evenings to provide aerial display++1%%NORTHERN LIGHTS',
+                                'Cut grass back to base of log%%KNIFE',
+                                'What an undertaker\'s tailor may need displayed around here%%HIS',
+                                'Yellowy brown bream swimming around%%AMBER',
+                                'Telescope in which vodka martini might be seen%%SPYGLASS',
+                                '\'Honest\' police held back new evidence%%CANDID',
+                                'Stopped, but not beginning to be relaxed%%EASED',
+                                'See 18%%MATERIALS',
+                                'Turn left in front of study to find fair%%GOLDEN',
+                                'The limits of navigational equipment%%COMPASS'];
+            var downClues = ['[[1]]',
+                                'What some people do to badger, in more ways than one%%BAIT',
+                                'Due legal process in general%%DE GAULLE',
+                                'From a railway line, travelling north, a girl in Pullman%%LYRA',
+                                'Rock a sailor, getting up, supported by another%%BASALT',
+                                'See 18 across%%DARK',
+                                'Bar a scoundrel, he is coming back in!%%ALEHOUSE',
+                                'Not something curdling milk all over%%TENNER',
+                                'The sea between Britain and New York is one%%BRINY',
+                                'Journalist\'s written about honour fix%%EMBED',
+                                'Pawn arrangement could provide men\'s cash%%CHESSMAN',
+                                'Floors that lady made straight%%KOSHER',
+                                'What one does to admirer to get married%%ANAGRAMS',
+                                'Snobbish girl riding in Russian car?%%LA-DI-DA',
+                                'Stop in Germany. It is in Germany%%DESIST',
+                                'Barge through square? Unpleasant woman!%%SCOW',
+                                'Gather food%%TUCK',
+                                'A girl has her bottom pinched unfortunately%%ALAS'];
+
+            $('#divTest').crossword({ gridMask: grid, acrossClues: acrossClues, downClues: downClues });
+        });
+    </script>
+  </body>
+</html>
