@@ -252,22 +252,27 @@
                         var code = event.keyCode || event.which || null;
                         if (!code) return true;
 
-                        // Get the direction of the highlighted clue.
-                        var direction = highlightedTiles.first().attr('row') === highlightedTiles.last().attr('row') ? 'a' : 'd';
+                        // Get the direction of the (first word in the) highlighted clue.
+                        var direction = highlightedTiles.filter('[cursorIndex=0]').attr('row') ===
+                                            highlightedTiles.filter('[cursorIndex=1]').attr('row') ? 'a' : 'd';
                         var oppDirection = direction === 'a' ? 'd' : 'a';
 
                         // Deleting - 8=backspace
                         if (code === 8) {
                             if (cursorIndex > 0) {
-                                highlightedTiles.eq(cursorIndex--).removeClass('tile-cursor');
+                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex--)).removeClass('tile-cursor');
                                 // Don't delete tile letters that have been filled in as part of another clue.
                                 while (cursorIndex > 0 &&
-                                    highlightedTiles.eq(cursorIndex).find('div.tile-letter').attr(oppDirection) === 'true') {
+                                    highlightedTiles
+                                        .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
+                                        .find('div.tile-letter')
+                                        .attr(oppDirection) === 'true') {
                                     cursorIndex--;
                                 }
-                                highlightedTiles.eq(cursorIndex)
-                                .addClass('tile-cursor')
-                                .find('div.tile-letter').not('[' + oppDirection + '=true]').remove();
+                                highlightedTiles
+                                    .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
+                                    .addClass('tile-cursor')
+                                    .find('div.tile-letter').not('[' + oppDirection + '=true]').remove();
                                 highlightedTiles.removeClass('tile-correct').removeClass('tile-incorrect');
                             }
                         }
@@ -281,35 +286,39 @@
                                                 .text(charEntered)
                                                 .css('text-align', 'center')
                                                 .attr(direction, 'true')
-                                                .appendTo(highlightedTiles.eq(cursorIndex));
+                                                .appendTo(highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)));
                                 // Align it vertically.
                                 letter.css('margin-top', (letter.parent().height() - letter.height()) / 2)
                                 // Move the 'cursor' on.
-                                highlightedTiles.eq(cursorIndex++).removeClass('tile-cursor');
+                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex++)).removeClass('tile-cursor');
                                 // Move the cursor past any squares that have been written into already.
                                 while (cursorIndex < highlightedTiles.length &&
-                                    highlightedTiles.eq(cursorIndex).find('div.tile-letter').length > 0) {
+                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).find('div.tile-letter').length > 0) {
                                     cursorIndex++;
                                 }
                                 if (cursorIndex < highlightedTiles.length) {
-                                    highlightedTiles.eq(cursorIndex).addClass('tile-cursor');
+                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).addClass('tile-cursor');
                                 }
                                 else {
                                     // Validate answer.
                                     var enteredAnswer = '', actualAnswer = '';
                                     // Get the entered answer.
-                                    highlightedTiles.find('div.tile-letter').each(function () {
-                                        enteredAnswer = enteredAnswer.concat($(this).text());
-                                    });
+                                    for (i = 0; i < highlightedTiles.length; i++) {
+                                        var letter = highlightedTiles
+                                                            .filter(impl.stringFormat('[cursorIndex={0}]', i))
+                                                            .find('div.tile-letter')
+                                                            .text();
+                                        enteredAnswer = enteredAnswer.concat(letter);
+                                    }
 
                                     var clueNo;
                                     // Across clue is highlighted, look for answer in across clues array.
                                     if (direction === 'a') {
-                                        clueNo = parseInt(highlightedTiles.first().attr('acrossClueNo'));
+                                        clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('acrossClueNo'));
                                     }
                                     else {
                                         // Down clue is highlighted, look for answer in down clues array.
-                                        clueNo = parseInt(highlightedTiles.first().attr('downClueNo'));
+                                        clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueNo'));
                                     }
 
                                     var clue = s.findClueByNumber(clueNo, direction);
@@ -435,10 +444,14 @@
                 var highlightedTiles;
                 var highlightedClue = 'none';
                 var subClues = [];
+                var s = this;
+                cursorIndex = 0;
 
                 // Highlight the across clue.    
                 if (acrossClueNo && prevHighlight === 0) {
-                    highlightedTiles = $(this.stringFormat('#grid td[acrossClueNo={0}]', acrossClueNo)).addClass('tile-highlight');
+                    $(this.stringFormat('#grid td[acrossClueNo={0}]', acrossClueNo))
+                            .addClass('tile-highlight')
+                            .each(function(index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                     highlightedClue = acrossClueNo + 'a';
 
                     var rootClue = s.findClueByNumber(acrossClueNo, 'a');
@@ -449,7 +462,9 @@
                 else {
                     // Highlight the down clue.
                     if (downClueNo && prevHighlight !== 2) {
-                        highlightedTiles = $(this.stringFormat('#grid td[downClueNo={0}]', downClueNo)).addClass('tile-highlight');
+                        $(this.stringFormat('#grid td[downClueNo={0}]', downClueNo))
+                                .addClass('tile-highlight')
+                                .each(function(index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                         highlightedClue = downClueNo + 'd';
 
                         var rootClue = s.findClueByNumber(downClueNo, 'd');
@@ -464,26 +479,28 @@
                 $.each(subClues, function (index, subClue) {
                     switch (subClue.direction) {
                         case 'a':
-                            highlightedTiles =
-                                $(s.stringFormat('#grid td[acrossClueNo={0}]', subClue.number)).addClass('tile-highlight')
-                                    .add(highlightedTiles);
+                           $(s.stringFormat('#grid td[acrossClueNo={0}]', subClue.number)).addClass('tile-highlight')
+                                    .each(function(index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                             break;
                         case 'd':
-                            highlightedTiles =
-                                $(s.stringFormat('#grid td[downClueNo={0}]', subClue.number)).addClass('tile-highlight')
-                                    .add(highlightedTiles);
+                           $(s.stringFormat('#grid td[downClueNo={0}]', subClue.number)).addClass('tile-highlight')
+                                    .each(function(index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                             break;
                     }
                 });
 
                 // Find the first highlighted tile without a filled in letter, and put the cursor there.
-                //var highlightedTiles = $('#grid td.tile-highlight');
+                var highlightedTiles = $('#grid td.tile-highlight');
                 cursorIndex = 0;
                 while (cursorIndex < highlightedTiles.length &&
-                        highlightedTiles.eq(cursorIndex).find('div.tile-letter').length > 0) {
+                        highlightedTiles
+                            .filter(s.stringFormat('[cursorIndex={0}]', cursorIndex))
+                            .find('div.tile-letter').length > 0) {
                     cursorIndex++;
                 }
-                highlightedTiles.eq(cursorIndex).addClass('tile-cursor');
+                highlightedTiles
+                    .filter(s.stringFormat('[cursorIndex={0}]', cursorIndex))
+                    .addClass('tile-cursor');
 
                 return highlightedClue
             },
@@ -641,7 +658,7 @@
                     // add as many nodes to the column as we can,
                     // but stop once our height is too tall
                     while ((manualBreaks || $parentColumn.height() < targetHeight) &&
-				  $pullOutHere[0].childNodes.length) {
+                  $pullOutHere[0].childNodes.length) {
                         var node = $pullOutHere[0].childNodes[0]
                         //
                         // Because we're not cloning, jquery will actually move the element"
@@ -806,10 +823,10 @@
 
                     $inBox.empty();
                     $inBox.append($("<div class='"
-			 + prefixTheClassName("first") + " "
-			 + prefixTheClassName("last") + " "
-			 + prefixTheClassName("column") + " "
-			 + "' style='width:100%; float: " + options.columnFloat + ";'></div>")); //"
+             + prefixTheClassName("first") + " "
+             + prefixTheClassName("last") + " "
+             + prefixTheClassName("column") + " "
+             + "' style='width:100%; float: " + options.columnFloat + ";'></div>")); //"
                     $col = $inBox.children().eq($inBox.children().length - 1);
                     $destroyable = $cache.clone(true);
                     if (options.overflow) {
@@ -897,9 +914,9 @@
                         optionWidth = false;
                     }
 
-                    //			if ($inBox.data("columnized") && numCols == $inBox.children().length) {
-                    //				return;
-                    //			}
+                    //          if ($inBox.data("columnized") && numCols == $inBox.children().length) {
+                    //              return;
+                    //          }
                     if (numCols <= 1) {
                         return singleColumnizeIt();
                     }
