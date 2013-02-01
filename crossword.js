@@ -2,6 +2,11 @@
 
     $.crossword = function (data, options) {
 
+        var defaultOptions = {
+            cluesToRight: true,
+            clueBox: true,
+            validateAnswer: true
+        };
         var cursorIndex;
         var acrossClues = [];
         var downClues = []
@@ -24,15 +29,9 @@
                 }
                 data.css('visibility', 'hidden');
 
-                var grid = s.buildGrid(options);
-
-                data.append(grid);
-
+                s.appendGrid(options);
+                s.appendClues(data, options.cluesToRight);
                 s.bindEvents();
-
-                s.appendClues(data, grid.outerWidth());
-
-                impl.columniseClues(grid.outerWidth());
 
                 data.hide();
                 data.css('visibility', 'visible');
@@ -41,7 +40,7 @@
                 return true;
             },
 
-            buildGrid: function (options) {
+            appendGrid: function (options) {
                 var gridWidth = options.gridMask[0].length;
                 var gridHeight = options.gridMask.length;
                 var gridSize = { width: gridWidth ? gridWidth : 0, height: gridHeight ? gridHeight : 0 };
@@ -132,11 +131,9 @@
                                 subClue.text = s.stringFormat(
                                             "See {0}{1}", rootClue.number, rootClue.bothWays ? rootClue.direction : '');
                                 subClue.pattern = null;
-                                //subClue.answer = rootClue.answer.substring(rootClue.length, rootClue.length + subClue.length);
                                 rootClue.subClues.push({ number: subClue.number, direction: subClue.direction });
                             }
                         });
-                        //rootClue.answer = rootClue.answer.substring(0, rootClue.length);
                     });
 
                     if (acrossNo || downNo) {
@@ -148,7 +145,16 @@
                     }
                 });
 
-                return grid;
+                // Attach a clue box?
+                var clueBox = options.clueBox === true ?
+                        $('<div id="clueBox" class="clue-box" ><span id="clueBoxText"></span></div>') : '';
+
+                // Add the grid into the DOM.
+                $('<div id="divGrid" />')
+                    .append(grid)
+                    .append(clueBox)
+                    .appendTo(data)
+                    .css({ display: "inline-block", width: grid.width() });
             },
 
             buildClueObject: function (clue, clueNo, clueLength, clueDirection, bothWays) {
@@ -303,40 +309,42 @@
                                     highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).addClass('tile-cursor');
                                 }
                                 else {
-                                    // Validate answer.
-                                    var enteredAnswer = '', actualAnswer = '';
-                                    // Get the entered answer.
-                                    for (i = 0; i < highlightedTiles.length; i++) {
-                                        var letter = highlightedTiles
+                                    if (options.validateAnswer === true) {
+                                        // Validate answer.
+                                        var enteredAnswer = '', actualAnswer = '';
+                                        // Get the entered answer.
+                                        for (i = 0; i < highlightedTiles.length; i++) {
+                                            var letter = highlightedTiles
                                                             .filter(impl.stringFormat('[cursorIndex={0}]', i))
                                                             .find('div.tile-letter')
                                                             .text();
-                                        enteredAnswer = enteredAnswer.concat(letter);
-                                    }
+                                            enteredAnswer = enteredAnswer.concat(letter);
+                                        }
 
-                                    var clueNo;
-                                    // Across clue is highlighted, look for answer in across clues array.
-                                    if (direction === 'a') {
-                                        clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('acrossClueNo'));
-                                    }
-                                    else {
-                                        // Down clue is highlighted, look for answer in down clues array.
-                                        clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueNo'));
-                                    }
-
-                                    var clue = s.findClueByNumber(clueNo, direction);
-                                    var actualAnswer = clue ? clue.answer : null;
-
-                                    // If there was an answer supplied, validate it.
-                                    if (actualAnswer) {
-                                        if (actualAnswer.toUpperCase() === enteredAnswer) {
-                                            highlightedTiles.addClass('tile-correct');
-                                            setTimeout(function () {
-                                                highlightedTiles.removeClass('tile-correct');
-                                            }, 1500);
+                                        var clueNo;
+                                        // Across clue is highlighted, look for answer in across clues array.
+                                        if (direction === 'a') {
+                                            clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('acrossClueNo'));
                                         }
                                         else {
-                                            highlightedTiles.addClass('tile-incorrect');
+                                            // Down clue is highlighted, look for answer in down clues array.
+                                            clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueNo'));
+                                        }
+
+                                        var clue = s.findClueByNumber(clueNo, direction);
+                                        var actualAnswer = clue ? clue.answer : null;
+
+                                        // If there was an answer supplied, validate it.
+                                        if (actualAnswer) {
+                                            if (actualAnswer.toUpperCase() === enteredAnswer) {
+                                                highlightedTiles.addClass('tile-correct');
+                                                setTimeout(function () {
+                                                    highlightedTiles.removeClass('tile-correct');
+                                                }, 1500);
+                                            }
+                                            else {
+                                                highlightedTiles.addClass('tile-incorrect');
+                                            }
                                         }
                                     }
                                 }
@@ -386,13 +394,9 @@
                 return null;
             },
 
-            appendClues: function (data, width) {
-                // Attach a clue box.
-                var clueBoxDiv = $('<div id="clueBox" class="clue-box"><span id="clueBoxText"></span></div');
-                data.append(clueBoxDiv);
-                clueBoxDiv.outerWidth(width);
-
-                var cluesDiv = $('<div id="clues" class="clues" />');
+            appendClues: function (data, onRight) {
+                var displayStyle = onRight ? "inline-block" : "block";
+                var cluesDiv = $(impl.stringFormat('<div id="clues" class="clues" style="vertical-align: top; display: {0}" />', displayStyle));
                 var missingClue = '<span style="color: red;">Missing clue</span>';
                 var s = this;
 
@@ -416,8 +420,9 @@
                                     clue.pattern ? clue.pattern : ''));
                 });
 
-                cluesDiv.outerWidth(width);
-                data.append(cluesDiv);
+                var width = onRight ? '' : $('#divGrid').width();
+                cluesDiv.outerWidth(width).appendTo(data);
+                impl.columniseClues(onRight);
             },
 
             showClue: function (tile) {
@@ -507,9 +512,9 @@
                 return highlightedClue
             },
 
-            columniseClues: function (dimension, byHeight) {
+            columniseClues: function (onRight) {
                 var cluesDiv = $('#clues');
-                var columnWidth = (dimension / 2) - 5;
+                var columnWidth = (cluesDiv.width() / 2) - 5;
 
                 var getNewColumn = function (number) {
                     return $(impl.stringFormat('<div id="col{0}" style="position: relative; display: inline-table; vertical-align: top; width: {1};" />', number, columnWidth));
@@ -524,13 +529,15 @@
 
                 cluesDiv.append(colDivs[0]);
 
-                var columnHeight = byHeight ? dimension : colDivs[0].height() / 2;
+                var columnHeight = onRight === true ? $('#divGrid').outerHeight() : colDivs[0].height() / 2;
                 var col = 1, done = false;
 
                 while (!done) {
                     var newColumn = false;
                     colDivs[col - 1].children('div').each(function () {
-                        if ($(this).position().top > columnHeight) {
+                        // If the clues are on the right, test the bottom of the clue div, else test the top.
+                        var extra = onRight ? $(this).height() : 0;
+                        if ($(this).position().top + extra > columnHeight) {
                             if (!newColumn) {
                                 colDivs.push(getNewColumn(col));
                                 newColumn = true;
@@ -547,8 +554,11 @@
                     }
                 }
 
-                cluesDiv.children('div').each(function() {
-                    if ($(this).attr('id') !== 'col' + (col-1)) {
+                cluesDiv.children('div').each(function (index, value) {
+                    if (onRight && index === 0) {
+                        $(this).css('margin-left', '5px');
+                    }
+                    if ($(this).attr('id') !== 'col' + (col - 1)) {
                         $(this).css('margin-right', '5px');
                     }
                 });
@@ -567,6 +577,7 @@
             }
         };
 
+        $.extend(options, defaultOptions);
         impl.init(data, options);
 
         return data;
