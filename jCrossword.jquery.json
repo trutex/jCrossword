@@ -1,0 +1,36 @@
+{
+  "name": "jCrossword",
+	"title": "Crossword puzzle widget",
+	"description": "jQuery plugin for showing a fullt interactive crossword widget on your page.",
+	"keywords": [
+		"crossword",
+		"widget",
+    "puzzle"
+	],
+	"version": "1.0.0",
+	"author": {
+		"name": "Stuart Saunderson",
+		"url": "http://github.com/trutex"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/trutex/jCrossword"
+	},
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://www.opensource.org/licenses/mit-license.php"
+		},
+		{
+			"type": "GPL",
+			"url": "http://www.gnu.org/copyleft/gpl.html"
+		}
+	],
+	"bugs": "https://github.com/trutex/jCrossword/issues",
+	"homepage": "https://github.com/trutex/jCrossword",
+	"docs": "https://github.com/trutex/jCrossword",
+	"download": "https://github.com/trutex/jCrossword",
+	"dependencies": {
+		"jquery": ">=1.7"
+	}
+}
