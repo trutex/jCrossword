@@ -8,8 +8,7 @@
             validateAnswer: true
         };
         var cursorIndex;
-        var acrossClues = [];
-        var downClues = []
+        var clues = [];
         var multiClues = [];
         var impl = {
 
@@ -69,7 +68,7 @@
                     }
                 }
 
-                var acrossClueIndex = 0, downClueIndex = 0;
+                var index = 0, acrossClueIndex = 0, downClueIndex = 0;
                 // Iterate through each active tile, adding clue numbers where appropriate and build clue arrays.
                 grid.find('td.tile-active').each(function () {
                     // Work out whether it's a numbered tile
@@ -83,7 +82,7 @@
                     var downNo = (i === 0 || options.gridMask[i - 1].charAt(j) === '@') &&
                                 (i < gridSize.height - 1 && options.gridMask[i + 1].charAt(j) !== '@')
 
-                    var row = i, col = j, direction;
+                    var row = i, col = j;
                     if (acrossNo) {
                         while (col < gridSize.width) {
                             var thisTile = grid.find(s.stringFormat('td[row={0}][col={1}]', row, col));
@@ -91,14 +90,14 @@
                                 break;
                             }
                             else {
-                                thisTile.attr('acrossClueNo', clueNo);
+                                thisTile.attr('acrossClueId', index);
                             }
                             col++;
                         }
 
-                        // Convert clue array into an object array.
-                        acrossClues.push(s.buildClueObject(
-                                        options.acrossClues[acrossClueIndex], clueNo, (col - j), 'a', (acrossNo && downNo)));
+                        // Build array of clue objects.
+                        clues.push(s.buildClueObject(
+                            options.acrossClues[acrossClueIndex], index++, clueNo, (col - j), 'a', (acrossNo && downNo)));
                         acrossClueIndex++;
                     }
 
@@ -111,30 +110,16 @@
                                 break;
                             }
                             else {
-                                thisTile.attr('downClueNo', clueNo);
+                                thisTile.attr('downClueId', index);
                             }
                             row++;
                         }
 
-                        // Convert clue array into an object array.
-                        downClues.push(s.buildClueObject(
-                                        options.downClues[downClueIndex], clueNo, (row - i), 'd', (acrossNo && downNo)));
+                        // Build array of clue objects.
+                        clues.push(s.buildClueObject(
+                            options.downClues[downClueIndex], index++, clueNo, (row - i), 'd', (acrossNo && downNo)));
                         downClueIndex++;
                     }
-
-                    $.each(multiClues, function (index, value) {
-                        var rootClue = value.clue;
-                        $.each(value.multiParts, function (index2, subClueText) {
-                            var findText = s.stringFormat("[[{0}]]", subClueText);
-                            var subClue = s.findClueByText(findText);
-                            if (subClue) {
-                                subClue.text = s.stringFormat(
-                                            "See {0}{1}", rootClue.number, rootClue.bothWays ? rootClue.direction : '');
-                                subClue.pattern = null;
-                                rootClue.subClues.push({ number: subClue.number, direction: subClue.direction });
-                            }
-                        });
-                    });
 
                     if (acrossNo || downNo) {
                         // Add a clue number label to the tile.
@@ -143,6 +128,22 @@
                                         .css('position', 'absolute')
                                         .appendTo($(this));
                     }
+                });
+
+                // Assign the text to the sub-clues of each multi-clue (e.g. "See 18a").
+                $.each(multiClues, function (index, value) {
+                    var rootClue = value.clue;
+                    $.each(value.multiParts, function (index2, subClueText) {
+                        var findText = s.stringFormat("[[{0}]]", subClueText);
+                        var subClue = s.findClueByText(findText);
+                        if (subClue) {
+                            subClue.rootClueId = rootClue.id;
+                            subClue.text = s.stringFormat(
+                                            "See {0}{1}", rootClue.number, rootClue.bothWays ? rootClue.direction : '');
+                            subClue.pattern = null;
+                            rootClue.subClueIds.push(subClue.id);
+                        }
+                    });
                 });
 
                 // Attach a clue box?
@@ -157,7 +158,7 @@
                     .css({ display: "inline-block", width: grid.width() });
             },
 
-            buildClueObject: function (clue, clueNo, clueLength, clueDirection, bothWays) {
+            buildClueObject: function (clue, clueId, clueNo, clueLength, clueDirection, bothWays) {
                 var clueText, clueAnswer, cluePattern;
                 if (typeof (clue) === 'object') {
                     clueText = clue.text;
@@ -221,14 +222,17 @@
 
                 // TODO: Validate clue pattern against length.
 
-                var clueObj = { text: clueText,
+                var clueObj = {
+                    text: clueText,
+                    id: clueId,
                     number: clueNo,
                     length: clueLength,
                     answer: clueAnswer,
                     pattern: cluePattern,
                     direction: clueDirection,
                     bothWays: bothWays,
-                    subClues: []
+                    rootClueId: -1,
+                    subClueIds: []
                 };
 
                 if (multiParts.length > 0) {
@@ -243,6 +247,20 @@
 
                 $('#grid td.tile-active').click(function () {
                     s.showClue($(this));
+                });
+
+                $('#clues span[id^=clueText-]').click(function () {
+                    // Find the clue tiles in the grid that correspond to the clicked on clue text, and simulate
+                    // a click on the first tile to trigger clue highlighting.
+                    var clueId = parseInt($(this).attr('id').substring(9));
+                    var clue = s.findClueById(clueId);
+                    if (clue) {
+                        var idAttr = clue.direction === 'a' ? 'acrossClueId' : 'downClueId';
+                        var clueTiles = $('#grid td.tile-active').filter(s.stringFormat('[{0}={1}]', idAttr, clue.id));
+                        if (clueTiles.length > 0) {
+                            s.showClue(clueTiles.eq(0), clue.direction);
+                        }
+                    }
                 });
 
                 $('#grid td.tile-active').mousedown(function (event) {
@@ -281,7 +299,9 @@
                                 highlightedTiles
                                     .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
                                     .addClass('tile-cursor')
-                                    .find('div.tile-letter').not('[' + oppDirection + '=true]').remove();
+                                    .find('div.tile-letter')
+                                    .not(impl.stringFormat('[{0}=true]', oppDirection))
+                                    .remove();
                                 highlightedTiles.removeClass('tile-correct').removeClass('tile-incorrect');
                             }
                         }
@@ -309,8 +329,8 @@
                                     highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).addClass('tile-cursor');
                                 }
                                 else {
+                                    // Answer filled in - validate it, if appropriate.
                                     if (options.validateAnswer === true) {
-                                        // Validate answer.
                                         var enteredAnswer = '', actualAnswer = '';
                                         // Get the entered answer.
                                         for (i = 0; i < highlightedTiles.length; i++) {
@@ -321,17 +341,17 @@
                                             enteredAnswer = enteredAnswer.concat(letter);
                                         }
 
-                                        var clueNo;
-                                        // Across clue is highlighted, look for answer in across clues array.
+                                        var clueId;
+                                        // Across clue is highlighted, look for answer for across clue.
                                         if (direction === 'a') {
-                                            clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('acrossClueNo'));
+                                            clueId = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('acrossClueId'));
                                         }
                                         else {
-                                            // Down clue is highlighted, look for answer in down clues array.
-                                            clueNo = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueNo'));
+                                            // Down clue is highlighted, look for answer for down clue.
+                                            clueId = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueId'));
                                         }
 
-                                        var clue = s.findClueByNumber(clueNo, direction);
+                                        var clue = s.findClueById(clueId);
                                         var actualAnswer = clue ? clue.answer : null;
 
                                         // If there was an answer supplied, validate it.
@@ -362,36 +382,28 @@
                 if (typeof (number) === 'string') {
                     number = parseInt(number);
                 }
-                var findFunc = function (c) { return c.number === number };
-                return this.findClue(direction, findFunc);
+                var findFunc = function (c) { return c.number === number && c.direction === direction };
+                var foundClues = this.findClues(findFunc);
+                return (foundClues.length === 1) ? foundClues[0] : null;
             },
 
-            findClueByText: function (clueText, direction) {
+            findClueById: function (id) {
+                return (id < clues.length) ? clues[id] : null;
+            },
+
+            findClueByText: function (clueText) {
                 var findFunc = function (c) { return c.text === clueText };
-                return this.findClue(direction, findFunc);
+                var foundClues = this.findClues(findFunc);
+                return (foundClues.length === 1) ? foundClues[0] : null;
             },
 
-            findClue: function (direction, findFunc) {
-                // If no direction specified, search both clue arrays, meaning first will be returned if there's more than
-                // one match.
-                direction = direction ? direction : 'b';
+            findCluesByDirection: function (direction) {
+                var findFunc = function (c) { return c.direction === direction };
+                return this.findClues(findFunc);
+            },
 
-                var foundClues = [];
-                if (direction === 'a' || direction === 'b') {
-                    foundClues = $.grep(acrossClues, findFunc);
-                }
-                if (foundClues.length === 1) {
-                    return foundClues[0];
-                }
-
-                if (direction === 'd' || direction === 'b') {
-                    foundClues = $.grep(downClues, findFunc);
-                }
-                if (foundClues.length === 1) {
-                    return foundClues[0];
-                }
-
-                return null;
+            findClues: function (findFunc) {
+                return $.grep(clues, findFunc);
             },
 
             appendClues: function (data, onRight) {
@@ -402,20 +414,24 @@
 
                 // Across clues.
                 cluesDiv.append('<div class="clue-header">ACROSS</div>');
+                var acrossClues = s.findCluesByDirection('a');
                 $.each(acrossClues, function (index, clue) {
                     cluesDiv.append(s.stringFormat(
-                                    '<div><span><b>{0}</b></span><span id="{0}a"> {1} {2}</span></div>',
+                                    '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
                                     clue.number,
+                                    clue.id,
                                     clue.text ? clue.text : missingClue,
                                     clue.pattern ? clue.pattern : ''));
                 });
 
                 // Down clues.
                 cluesDiv.append('<div class="clue-header">DOWN</div>');
+                var downClues = s.findCluesByDirection('d');
                 $.each(downClues, function (index, clue) {
                     cluesDiv.append(s.stringFormat(
-                                    '<div><span><b>{0}</b></span><span id="{0}d"> {1} {2}</span></div>',
+                                    '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
                                     clue.number,
+                                    clue.id,
                                     clue.text ? clue.text : missingClue,
                                     clue.pattern ? clue.pattern : ''));
                 });
@@ -425,18 +441,26 @@
                 impl.columniseClues(onRight);
             },
 
-            showClue: function (tile) {
-                var clueNo = this.highlightTiles(tile);
-                // Highlight corresponding clue text.
+            showClue: function (tile, direction) {
+                var clueIds = this.highlightTiles(tile, direction);
+
+                // Remove highlighting from previously highlighted clue texts.
                 $('#clues span.clue-highlight').removeClass('clue-highlight');
-                var clueText = $(this.stringFormat('#clues span#{0}', clueNo)).addClass('clue-highlight').text();
-                $('#clueBox span').fadeOut('fast', function () {
-                    $('#clueBox span').text(clueText);
-                    $('#clueBox span').fadeIn('fast');
+
+                $.each(clueIds, function (index, value) {
+                    // Highlight corresponding clue text(s).
+                    var clue = $(impl.stringFormat('#clues span#clueText-{0}', value)).addClass('clue-highlight');
+                    // Put the root clue text into the clue box.
+                    if (index === 0) {
+                        $('#clueBox span').fadeOut('fast', function () {
+                            $('#clueBox span').text(clue.text());
+                            $('#clueBox span').fadeIn('fast');
+                        });
+                    }
                 });
             },
 
-            highlightTiles: function (tile) {
+            highlightTiles: function (tile, direction) {
                 var s = this, prevHighlight = 0;
                 // Record which direction the (originally clicked on) clue is currently hightlighted in, if any - 1=across, 2=down
                 if (tile.hasClass('tile-highlight')) {
@@ -447,53 +471,71 @@
                 $('#grid td.tile-highlight').removeClass('tile-highlight');
                 $('#grid td.tile-cursor').removeClass('tile-cursor');
 
-                var acrossClueNo = tile.attr('acrossClueNo');
-                var downClueNo = tile.attr('downClueNo');
+                var acrossClueId = tile.attr('acrossClueId');
+                var downClueId = tile.attr('downClueId');
+                var rootClueId;
                 var highlightedTiles;
-                var highlightedClue = 'none';
-                var subClues = [];
+                var highlightedClueId = -1;
+                var rootClue = null;
+                var subClueIds = [];
                 var s = this;
                 cursorIndex = 0;
 
-                // Highlight the across clue.    
-                if (acrossClueNo && prevHighlight === 0) {
-                    $(this.stringFormat('#grid td[acrossClueNo={0}]', acrossClueNo))
-                            .addClass('tile-highlight')
-                            .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
-                    highlightedClue = acrossClueNo + 'a';
-
-                    var rootClue = s.findClueByNumber(acrossClueNo, 'a');
-                    if (rootClue) {
-                        subClues = rootClue.subClues;
-                    }
+                // Find the root clue to highlight (may be none) If 'direction' parameter passed in, that overrides
+                // result based on previous highlighting.
+                if (direction === 'a') {
+                    rootClueId = acrossClueId;
                 }
                 else {
-                    // Highlight the down clue.
-                    if (downClueNo && prevHighlight !== 2) {
-                        $(this.stringFormat('#grid td[downClueNo={0}]', downClueNo))
-                                .addClass('tile-highlight')
-                                .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
-                        highlightedClue = downClueNo + 'd';
-
-                        var rootClue = s.findClueByNumber(downClueNo, 'd');
-                        if (rootClue) {
-                            subClues = rootClue.subClues;
+                    if (direction === 'd') {
+                        rootClueId = downClueId;
+                    }
+                    else {
+                        if (acrossClueId && prevHighlight === 0) {
+                            rootClueId = acrossClueId;
+                        }
+                        else {
+                            if (downClueId && prevHighlight !== 2) {
+                                rootClueId = downClueId;
+                            }
                         }
                     }
                 }
 
-                // Also highlight any sub-clues.
-                $.each(subClues, function (index, subClue) {
-                    switch (subClue.direction) {
+                rootClue = s.findClueById(rootClueId);
+                if (rootClue) {
+                    if (rootClue.rootClueId >= 0) {
+                        rootClue = s.findClueById(rootClue.rootClueId);
+                    }
+                    subClueIds = rootClue.subClueIds;
+                }
+
+                if (rootClue) {
+                    switch (rootClue.direction) {
                         case 'a':
-                            $(s.stringFormat('#grid td[acrossClueNo={0}]', subClue.number)).addClass('tile-highlight')
+                            // Highlight the across clue.
+                            $(this.stringFormat('#grid td[acrossClueId={0}]', rootClue.id))
+                                    .addClass('tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
+                            highlightedClueId = rootClue.id;
                             break;
+
                         case 'd':
-                            $(s.stringFormat('#grid td[downClueNo={0}]', subClue.number)).addClass('tile-highlight')
+                            // Highlight the down clue.
+                            $(this.stringFormat('#grid td[downClueId={0}]', rootClue.id))
+                                    .addClass('tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
+                            highlightedClueId = rootClue.id;
                             break;
                     }
+                }
+
+                // Also highlight any sub-clues.
+                $.each(subClueIds, function (index, subClueId) {
+                    $(s.stringFormat('#grid td[acrossClueId={0}]', subClueId))
+                            .add(s.stringFormat('#grid td[downClueId={0}]', subClueId))
+                                .addClass('tile-highlight')
+                                .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                 });
 
                 // Find the first highlighted tile without a filled in letter, and put the cursor there.
@@ -509,7 +551,7 @@
                     .filter(s.stringFormat('[cursorIndex={0}]', cursorIndex))
                     .addClass('tile-cursor');
 
-                return highlightedClue
+                return [highlightedClueId].concat(subClueIds);
             },
 
             columniseClues: function (onRight) {
