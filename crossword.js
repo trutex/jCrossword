@@ -246,21 +246,36 @@
                 var s = this;
 
                 $('#grid td.tile-active').click(function () {
-                    s.showClue($(this));
+                    var prevDirection = '';
+                    // Record which direction the clue is currently hightlighted in, if any.
+                    if ($(this).hasClass('tile-highlight')) {
+                        prevDirection = $(this).prev('td.tile-active').hasClass('tile-highlight') ||
+                                   $(this).next('td.tile-active').hasClass('tile-highlight') ? 'a' : 'd';
+                    }
+                    // Determine the ID of the clue to highlight (may be none).
+                    var acrossClueId = $(this).attr('acrossClueId');
+                    var downClueId = $(this).attr('downClueId');
+                    var clueId = -1;
+
+                    // Clue highlighting cycles in the sequence:
+                    // Across (if tile in across clue), Down (if tile in down clue), None.
+                    if (acrossClueId && prevDirection === '') {
+                        clueId = acrossClueId;
+                    }
+                    else {
+                        if (downClueId && prevDirection !== 'd') {
+                            clueId = downClueId;
+                        }
+                    }
+                    impl.showClue(clueId);
                 });
 
                 $('#clues span[id^=clueText-]').click(function () {
-                    // Find the clue tiles in the grid that correspond to the clicked on clue text, and simulate
-                    // a click on the first tile to trigger clue highlighting.
-                    var clueId = parseInt($(this).attr('id').substring(9));
-                    var clue = s.findClueById(clueId);
-                    if (clue) {
-                        var idAttr = clue.direction === 'a' ? 'acrossClueId' : 'downClueId';
-                        var clueTiles = $('#grid td.tile-active').filter(s.stringFormat('[{0}={1}]', idAttr, clue.id));
-                        if (clueTiles.length > 0) {
-                            s.showClue(clueTiles.eq(0), clue.direction);
-                        }
+                    var clueId = -1;
+                    if (!$(this).hasClass('clue-highlight')) {
+                        clueId = parseInt($(this).attr('id').substring(9));
                     }
+                    impl.showClue(clueId);
                 });
 
                 $('#grid td.tile-active').mousedown(function (event) {
@@ -441,117 +456,85 @@
                 impl.columniseClues(onRight);
             },
 
-            showClue: function (tile, direction) {
-                var clueIds = this.highlightTiles(tile, direction);
-
+            showClue: function (clueId) {
+                // Remove highlighting from previously highlighted tiles.
+                $('#grid td.tile-highlight').removeClass('tile-highlight');
+                $('#grid td.tile-cursor').removeClass('tile-cursor');
                 // Remove highlighting from previously highlighted clue texts.
                 $('#clues span.clue-highlight').removeClass('clue-highlight');
 
-                $.each(clueIds, function (index, value) {
-                    // Highlight corresponding clue text(s).
-                    var clue = $(impl.stringFormat('#clues span#clueText-{0}', value)).addClass('clue-highlight');
-                    // Put the root clue text into the clue box.
-                    if (index === 0) {
-                        $('#clueBox span').fadeOut('fast', function () {
-                            $('#clueBox span').text(clue.text());
-                            $('#clueBox span').fadeIn('fast');
-                        });
-                    }
-                });
+                clueId = clueId ? clueId : -1;
+
+                if (clueId >= 0) {
+                    var clueIds = this.highlightTiles(clueId);
+
+                    $.each(clueIds, function (index, value) {
+                        // Highlight corresponding clue text(s).
+                        var clue = $(impl.stringFormat('#clues span#clueText-{0}', value)).addClass('clue-highlight');
+                        // Put the root clue text into the clue box.
+                        if (index === 0) {
+                            $('#clueBox span').fadeOut('fast', function () {
+                                $('#clueBox span').text(clue.text());
+                                $('#clueBox span').fadeIn('fast');
+                            });
+                        }
+                    });
+                }
             },
 
-            highlightTiles: function (tile, direction) {
-                var s = this, prevHighlight = 0;
-                // Record which direction the (originally clicked on) clue is currently hightlighted in, if any - 1=across, 2=down
-                if (tile.hasClass('tile-highlight')) {
-                    prevHighlight = tile.prev('td.tile-active').hasClass('tile-highlight') ||
-                                   tile.next('td.tile-active').hasClass('tile-highlight') ? 1 : 2;
-                }
-                // Remove any current highlighting
-                $('#grid td.tile-highlight').removeClass('tile-highlight');
-                $('#grid td.tile-cursor').removeClass('tile-cursor');
-
-                var acrossClueId = tile.attr('acrossClueId');
-                var downClueId = tile.attr('downClueId');
-                var rootClueId;
-                var highlightedTiles;
-                var highlightedClueId = -1;
+            highlightTiles: function (clueId) {
                 var rootClue = null;
                 var subClueIds = [];
-                var s = this;
-                cursorIndex = 0;
 
-                // Find the root clue to highlight (may be none) If 'direction' parameter passed in, that overrides
-                // result based on previous highlighting.
-                if (direction === 'a') {
-                    rootClueId = acrossClueId;
-                }
-                else {
-                    if (direction === 'd') {
-                        rootClueId = downClueId;
-                    }
-                    else {
-                        if (acrossClueId && prevHighlight === 0) {
-                            rootClueId = acrossClueId;
-                        }
-                        else {
-                            if (downClueId && prevHighlight !== 2) {
-                                rootClueId = downClueId;
-                            }
-                        }
-                    }
-                }
-
-                rootClue = s.findClueById(rootClueId);
+                rootClue = impl.findClueById(clueId);
                 if (rootClue) {
                     if (rootClue.rootClueId >= 0) {
-                        rootClue = s.findClueById(rootClue.rootClueId);
+                        rootClue = impl.findClueById(rootClue.rootClueId);
                     }
                     subClueIds = rootClue.subClueIds;
                 }
 
+                // Highlight the root clue.
                 if (rootClue) {
                     switch (rootClue.direction) {
                         case 'a':
                             // Highlight the across clue.
-                            $(this.stringFormat('#grid td[acrossClueId={0}]', rootClue.id))
+                            $(impl.stringFormat('#grid td[acrossClueId={0}]', rootClue.id))
                                     .addClass('tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
-                            highlightedClueId = rootClue.id;
                             break;
 
                         case 'd':
                             // Highlight the down clue.
-                            $(this.stringFormat('#grid td[downClueId={0}]', rootClue.id))
+                            $(impl.stringFormat('#grid td[downClueId={0}]', rootClue.id))
                                     .addClass('tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
-                            highlightedClueId = rootClue.id;
                             break;
                     }
+
+                    // Also highlight any sub-clues.
+                    $.each(subClueIds, function (index, subClueId) {
+                        $(impl.stringFormat('#grid td[acrossClueId={0}]', subClueId))
+                                .add(impl.stringFormat('#grid td[downClueId={0}]', subClueId))
+                                    .addClass('tile-highlight')
+                                    .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
+                    });
+
+                    // Find the first highlighted tile without a filled in letter, and put the cursor there.
+                    var highlightedTiles = $('#grid td.tile-highlight');
+                    cursorIndex = 0;
+                    while (cursorIndex < highlightedTiles.length &&
+                            highlightedTiles
+                                .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
+                                .find('div.tile-letter').length > 0) {
+                        cursorIndex++;
+                    }
+                    highlightedTiles
+                        .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
+                        .addClass('tile-cursor');
                 }
 
-                // Also highlight any sub-clues.
-                $.each(subClueIds, function (index, subClueId) {
-                    $(s.stringFormat('#grid td[acrossClueId={0}]', subClueId))
-                            .add(s.stringFormat('#grid td[downClueId={0}]', subClueId))
-                                .addClass('tile-highlight')
-                                .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
-                });
-
-                // Find the first highlighted tile without a filled in letter, and put the cursor there.
-                var highlightedTiles = $('#grid td.tile-highlight');
-                cursorIndex = 0;
-                while (cursorIndex < highlightedTiles.length &&
-                        highlightedTiles
-                            .filter(s.stringFormat('[cursorIndex={0}]', cursorIndex))
-                            .find('div.tile-letter').length > 0) {
-                    cursorIndex++;
-                }
-                highlightedTiles
-                    .filter(s.stringFormat('[cursorIndex={0}]', cursorIndex))
-                    .addClass('tile-cursor');
-
-                return [highlightedClueId].concat(subClueIds);
+                return [rootClue.id].concat(subClueIds);
             },
 
             columniseClues: function (onRight) {
