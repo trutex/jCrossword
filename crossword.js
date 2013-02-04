@@ -57,13 +57,14 @@
                     var row = $(grid).find('tr').last()
 
                     for (j = 0; j < gridSize.width; j++) {
-                        row.append(this.stringFormat('<td class="tile" row="{0}" col="{1}" />', i, j));
+                        row.append(this.stringFormat('<td class="tile" row="{0}" col="{1}">&nbsp;</td>', i, j));
 
                         if (typeof (options.gridMask[i]) !== 'undefined' && options.gridMask[i].charAt(j) === '@') {
                             row.children().last().addClass('tile-inactive');
                         }
                         else {
                             row.children().last().addClass('tile-active');
+
                         }
                     }
                 }
@@ -318,6 +319,7 @@
                                 highlightedTiles
                                     .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
                                     .addClass('tile-cursor')
+                                    .html('&nbsp;')
                                     .find('div.tile-letter')
                                     .not(impl.stringFormat('[{0}=true]', oppDirection))
                                     .remove();
@@ -334,7 +336,7 @@
                                                 .text(charEntered)
                                                 .css('text-align', 'center')
                                                 .attr(direction, 'true')
-                                                .appendTo(highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)));
+                                                .appendTo(highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).html(''));
                                 // Align it vertically.
                                 letter.css('margin-top', (letter.parent().height() - letter.height()) / 2)
                                 // Move the 'cursor' on.
@@ -466,6 +468,7 @@
                 $('#grid td.tile-cursor').removeClass('tile-cursor');
                 // Remove highlighting from previously highlighted clue texts.
                 $('#clues span.clue-highlight').removeClass('clue-highlight');
+                $('#clueBox span').fadeOut('fast');
 
                 clueId = clueId ? clueId : -1;
 
