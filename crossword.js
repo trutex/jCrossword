@@ -301,7 +301,11 @@
 
                         // Deleting - 8=backspace
                         if (code === 8) {
-                            if (cursorIndex > 0) {
+                            if (cursorIndex > 1 ||
+                                    (cursorIndex > 0 && highlightedTiles
+                                        .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex-1))
+                                        .find('div.tile-letter')
+                                        .attr(oppDirection) !== 'true')) {
                                 highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex--)).removeClass('tile-cursor');
                                 // Don't delete tile letters that have been filled in as part of another clue.
                                 while (cursorIndex > 0 &&
@@ -485,6 +489,7 @@
             highlightTiles: function (clueId) {
                 var rootClue = null;
                 var subClueIds = [];
+                cursorIndex = 0;
 
                 rootClue = impl.findClueById(clueId);
                 if (rootClue) {
