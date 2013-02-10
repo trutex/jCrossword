@@ -1,20 +1,11 @@
-#grid
-{
-    border: solid 1px black;
-}
-
-#grid td.tile
-{
-    width: 25px;
-    height: 25px;
-    border: solid 1px black;
-    padding: 0px;
-    vertical-align: top;
-}
-
 #grid td.tile-highlight
 {
     background-color: Yellow !important;
+}
+
+#grid td.tile-cursor
+{
+    border-color: White !important;
 }
 
 #grid td.tile-correct
@@ -27,51 +18,7 @@
     border-color: Red !important; 
 }
 
-#grid td.tile-active
-{
-    background-color: White;
-}
-
-#grid td.tile-inactive
-{
-    background-color: Black;
-}
-
-#grid td.tile-cursor
-{
-    border-color: White !important;
-}
-
-.clue-no
-{
-    font-size: 8px;
-}
-
-.clue-header
-{
-    font-size: 105%;
-    font-weight: bold;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
 .clue-highlight
 {
     font-weight: bold;
-}
-
-.clue-box
-{
-    padding: 5px;
-    margin-top: 5px;
-    border: solid 1px Black;
-    -moz-border-radius: 8px;
-	-webkit-border-radius: 8px;
-	-o-border-radius: 8px;
-	-ms-border-radius: 8px;
-	-khtml-border-radius: 8px;
-	border-radius: 8px;
-    font-size: 105%;
-    font-weight: bold;
-    height: 50px;
 }
