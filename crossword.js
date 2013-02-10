@@ -3,9 +3,11 @@
     $.crossword = function (data, options) {
 
         var defaultOptions = {
+            colour: 'Black',
             cluesToRight: true,
             clueBox: true,
-            validateAnswer: true
+            validateAnswer: 'none',
+            tileSize: 25
         };
         var cursorIndex;
         var clues = [];
@@ -13,7 +15,6 @@
         var impl = {
 
             init: function (data, options) {
-                var s = this;
                 var dataType = typeof (data);
 
                 if (dataType === 'object') {
@@ -28,9 +29,11 @@
                 }
                 data.css('visibility', 'hidden');
 
-                s.appendGrid(options);
-                s.appendClues(data, options.cluesToRight);
-                s.bindEvents();
+                options = $.extend(defaultOptions, options);
+
+                impl.appendGrid(options);
+                impl.appendClues(data, options.cluesToRight);
+                impl.bindEvents();
 
                 data.hide();
                 data.css('visibility', 'visible');
@@ -46,25 +49,38 @@
 
                 options.acrossClues = options.acrossClues ? options.acrossClues : [];
                 options.downClues = options.downClues ? options.downClues : [];
+                var borderStyle = impl.stringFormat('solid 1px {0}', options.colour);
 
-                var grid = $('<table id="grid" cellSpacing="0" rowSpacing="0"></table>');
+                var grid = $('<table id="grid" cellSpacing="0" rowSpacing="0"></table>').css({ border: borderStyle });
                 var clueNo = 1;
-                var s = this;
+
+                var newTile = function(row, col) {
+                    return $(impl.stringFormat('<td class="tile" row="{0}" col="{1}" />', row, col))
+                                .css({ width: options.tileSize,
+                                        height: options.tileSize,
+                                        border: borderStyle,
+                                        padding: '0px',
+                                        'vertical-align': 'top' })
+                                // Must add at least one space to get borders showing in IE7.
+                                .append(
+                                    $('<div class="tile-letter" />')
+                                    .text(' ')
+                                    .css({ 'text-align': 'center', 'font-size': options.tileSize - 9 })
+                                );
+                }
 
                 // Build the bare grid.
                 for (i = 0; i < gridSize.height; i++) {
-                    grid.append('<tr />');
-                    var row = $(grid).find('tr').last()
+                    var row = $('<tr />').appendTo(grid);
 
                     for (j = 0; j < gridSize.width; j++) {
-                        row.append(this.stringFormat('<td class="tile" row="{0}" col="{1}">&nbsp;</td>', i, j));
+                        var tile = newTile(i, j).appendTo(row);
 
                         if (typeof (options.gridMask[i]) !== 'undefined' && options.gridMask[i].charAt(j) === '@') {
-                            row.children().last().addClass('tile-inactive');
+                            tile.addClass('tile-inactive').css('background-color', options.colour);
                         }
                         else {
-                            row.children().last().addClass('tile-active');
-
+                            tile.addClass('tile-active').css('background-color', 'White');
                         }
                     }
                 }
@@ -86,7 +102,7 @@
                     var row = i, col = j;
                     if (acrossNo) {
                         while (col < gridSize.width) {
-                            var thisTile = grid.find(s.stringFormat('td[row={0}][col={1}]', row, col));
+                            var thisTile = grid.find(impl.stringFormat('td[row={0}][col={1}]', row, col));
                             if (thisTile.hasClass('tile-inactive')) {
                                 break;
                             }
@@ -97,7 +113,7 @@
                         }
 
                         // Build array of clue objects.
-                        clues.push(s.buildClueObject(
+                        clues.push(impl.buildClueObject(
                             options.acrossClues[acrossClueIndex], index++, clueNo, (col - j), 'a', (acrossNo && downNo)));
                         acrossClueIndex++;
                     }
@@ -106,7 +122,7 @@
                     col = j;
                     if (downNo) {
                         while (row < gridSize.height) {
-                            var thisTile = grid.find(s.stringFormat('td[row={0}][col={1}]', row, col));
+                            var thisTile = grid.find(impl.stringFormat('td[row={0}][col={1}]', row, col));
                             if (thisTile.hasClass('tile-inactive')) {
                                 break;
                             }
@@ -117,17 +133,18 @@
                         }
 
                         // Build array of clue objects.
-                        clues.push(s.buildClueObject(
+                        clues.push(impl.buildClueObject(
                             options.downClues[downClueIndex], index++, clueNo, (row - i), 'd', (acrossNo && downNo)));
                         downClueIndex++;
                     }
 
                     if (acrossNo || downNo) {
                         // Add a clue number label to the tile.
-                        $('<span class="clue-no" />')
-                                        .text(clueNo++)
-                                        .css('position', 'absolute')
-                                        .appendTo($(this));
+                        $(this).prepend(
+                            $('<span class="clue-no" />')
+                                            .text(clueNo++)
+                                            .css({ 'position': 'absolute', 'font-size': options.tileSize / 3 })
+                        );
                     }
                 });
 
@@ -135,11 +152,11 @@
                 $.each(multiClues, function (index, value) {
                     var rootClue = value.clue;
                     $.each(value.multiParts, function (index2, subClueText) {
-                        var findText = s.stringFormat("[[{0}]]", subClueText);
-                        var subClue = s.findClueByText(findText);
+                        var findText = impl.stringFormat("[[{0}]]", subClueText);
+                        var subClue = impl.findClueByText(findText);
                         if (subClue) {
                             subClue.rootClueId = rootClue.id;
-                            subClue.text = s.stringFormat(
+                            subClue.text = impl.stringFormat(
                                             "See {0}{1}", rootClue.number, rootClue.bothWays ? rootClue.direction : '');
                             subClue.pattern = null;
                             rootClue.subClueIds.push(subClue.id);
@@ -149,7 +166,21 @@
 
                 // Attach a clue box?
                 var clueBox = options.clueBox === true ?
-                        $('<div id="clueBox" class="clue-box" ><span id="clueBoxText"></span></div>') : '';
+                        $('<div id="clueBox" />').css({
+                            padding: '5px',
+                            'margin-top': '5px',
+                            border: borderStyle,
+                            '-moz-border-radius': '8px',
+                            '-webkit-border-radius': '8px',
+                            '-o-border-radius': '8px',
+                            '-ms-border-radius': '8px',
+                            '-khtml-border-radius': '8px',
+                            'border-radius': '8px',
+                            'font-size': '105%',
+                            'font-weight': 'bold',
+                            height: '50px'
+                        })
+                        .append('<span id="clueBoxText" />') : '';
 
                 // Add the grid into the DOM.
                 $('<div id="divGrid" />')
@@ -157,7 +188,14 @@
                     .append(clueBox)
                     .appendTo(data)
                     .css({ display: "inline-block", width: grid.width() });
-            },
+
+                    // Align tile letters vertically.
+                    $('.tile-letter').each(function() {
+                        $(this).text('A');
+                        $(this).css('margin-top', (options.tileSize - $(this).height()) / 2);
+                        $(this).text(' ');
+                    });
+             },
 
             buildClueObject: function (clue, clueId, clueNo, clueLength, clueDirection, bothWays) {
                 var clueText, clueAnswer, cluePattern;
@@ -214,7 +252,7 @@
                 }
 
                 // Enclose the clue pattern in brackets.
-                cluePattern = this.stringFormat("({0})", cluePattern);
+                cluePattern = impl.stringFormat("({0})", cluePattern);
 
                 // Strip non-alpha characters from answer so it can be validated.
                 if (clueAnswer) {
@@ -319,10 +357,10 @@
                                 highlightedTiles
                                     .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
                                     .addClass('tile-cursor')
-                                    .html('&nbsp;')
                                     .find('div.tile-letter')
                                     .not(impl.stringFormat('[{0}=true]', oppDirection))
-                                    .remove();
+                                    .text(' ')
+                                    .removeAttr(direction);
                                 highlightedTiles.removeClass('tile-correct').removeClass('tile-incorrect');
                             }
                         }
@@ -331,19 +369,15 @@
                             var charEntered = String.fromCharCode(code).toUpperCase();
 
                             if (/[A-Z]/i.test(charEntered)) {
-                                // Add a letter into the cell, horizontally centre-aligned.
-                                var letter = $('<div class="tile-letter"/>')
-                                                .text(charEntered)
-                                                .css('text-align', 'center')
-                                                .attr(direction, 'true')
-                                                .appendTo(highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).html(''));
-                                // Align it vertically.
-                                letter.css('margin-top', (letter.parent().height() - letter.height()) / 2)
+                                // Write the entered letter into the tile.
+                                $('.tile-letter', highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)))
+                                    .text(charEntered)
+                                    .attr(direction, 'true');
                                 // Move the 'cursor' on.
                                 highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex++)).removeClass('tile-cursor');
                                 // Move the cursor past any squares that have been written into already.
                                 while (cursorIndex < highlightedTiles.length &&
-                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).find('div.tile-letter').length > 0) {
+                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).find('div.tile-letter').text() !== ' ') {
                                     cursorIndex++;
                                 }
                                 if (cursorIndex < highlightedTiles.length) {
@@ -351,7 +385,7 @@
                                 }
                                 else {
                                     // Answer filled in - validate it, if appropriate.
-                                    if (options.validateAnswer === true) {
+                                    if (options.validateAnswer === 'clue' || (options.validateAnswer === 'grid' && impl.isGridCompleted())) {
                                         var enteredAnswer = '', actualAnswer = '';
                                         // Get the entered answer.
                                         for (i = 0; i < highlightedTiles.length; i++) {
@@ -372,19 +406,20 @@
                                             clueId = parseInt(highlightedTiles.filter('[cursorIndex=0]').attr('downClueId'));
                                         }
 
-                                        var clue = s.findClueById(clueId);
+                                        var clue = impl.findClueById(clueId);
                                         var actualAnswer = clue ? clue.answer : null;
 
                                         // If there was an answer supplied, validate it.
+                                        var tilesToHighlight = options.validateAnswer === 'clue' ? highlightedTiles : $('.tile-active');
                                         if (actualAnswer) {
                                             if (actualAnswer.toUpperCase() === enteredAnswer) {
-                                                highlightedTiles.addClass('tile-correct');
+                                                tilesToHighlight.addClass('tile-correct');
                                                 setTimeout(function () {
-                                                    highlightedTiles.removeClass('tile-correct');
+                                                    tilesToHighlight.removeClass('tile-correct');
                                                 }, 1500);
                                             }
                                             else {
-                                                highlightedTiles.addClass('tile-incorrect');
+                                                tilesToHighlight.addClass('tile-incorrect');
                                             }
                                         }
                                     }
@@ -398,13 +433,20 @@
                 });
             },
 
+            isGridCompleted: function() {
+                // Return true if all active tiles have a letter entered into them.
+                return $('.tile-active').find('.tile-letter').filter(function() {
+                    return $(this).text() === ' ';
+                }).length === 0;
+            },
+
             findClueByNumber: function (clueNo, direction) {
                 var number = clueNo;
                 if (typeof (number) === 'string') {
                     number = parseInt(number);
                 }
                 var findFunc = function (c) { return c.number === number && c.direction === direction };
-                var foundClues = this.findClues(findFunc);
+                var foundClues = impl.findClues(findFunc);
                 return (foundClues.length === 1) ? foundClues[0] : null;
             },
 
@@ -414,13 +456,13 @@
 
             findClueByText: function (clueText) {
                 var findFunc = function (c) { return c.text === clueText };
-                var foundClues = this.findClues(findFunc);
+                var foundClues = impl.findClues(findFunc);
                 return (foundClues.length === 1) ? foundClues[0] : null;
             },
 
             findCluesByDirection: function (direction) {
                 var findFunc = function (c) { return c.direction === direction };
-                return this.findClues(findFunc);
+                return impl.findClues(findFunc);
             },
 
             findClues: function (findFunc) {
@@ -431,13 +473,20 @@
                 var displayStyle = onRight ? "inline-block" : "block";
                 var cluesDiv = $(impl.stringFormat('<div id="clues" class="clues" style="vertical-align: top; display: {0}" />', displayStyle));
                 var missingClue = '<span style="color: red;">Missing clue</span>';
-                var s = this;
+                var clueHeader = function(label) {
+                    return $('<div />').css({
+                        'font-size': '105%',
+                        'font-weight': 'bold',
+                        'padding-top': '5px',
+                        'padding-bottom': '5px'
+                    }).text(label);
+                };
 
                 // Across clues.
-                cluesDiv.append('<div class="clue-header">ACROSS</div>');
-                var acrossClues = s.findCluesByDirection('a');
+                clueHeader('ACROSS').appendTo(cluesDiv);
+                var acrossClues = impl.findCluesByDirection('a');
                 $.each(acrossClues, function (index, clue) {
-                    cluesDiv.append(s.stringFormat(
+                    cluesDiv.append(impl.stringFormat(
                                     '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
                                     clue.number,
                                     clue.id,
@@ -446,10 +495,10 @@
                 });
 
                 // Down clues.
-                cluesDiv.append('<div class="clue-header">DOWN</div>');
-                var downClues = s.findCluesByDirection('d');
+                clueHeader('DOWN').appendTo(cluesDiv);
+                var downClues = impl.findCluesByDirection('d');
                 $.each(downClues, function (index, clue) {
-                    cluesDiv.append(s.stringFormat(
+                    cluesDiv.append(impl.stringFormat(
                                     '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
                                     clue.number,
                                     clue.id,
@@ -473,7 +522,7 @@
                 clueId = clueId ? clueId : -1;
 
                 if (clueId >= 0) {
-                    var clueIds = this.highlightTiles(clueId);
+                    var clueIds = impl.highlightTiles(clueId);
 
                     $.each(clueIds, function (index, value) {
                         // Highlight corresponding clue text(s).
@@ -534,7 +583,7 @@
                     while (cursorIndex < highlightedTiles.length &&
                             highlightedTiles
                                 .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
-                                .find('div.tile-letter').length > 0) {
+                                .find('div.tile-letter').text() !== ' ') {
                         cursorIndex++;
                     }
                     highlightedTiles
@@ -610,7 +659,6 @@
             }
         };
 
-        $.extend(options, defaultOptions);
         impl.init(data, options);
 
         return data;
