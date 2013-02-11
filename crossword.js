@@ -51,11 +51,11 @@
                 options.downClues = options.downClues ? options.downClues : [];
                 var borderStyle = impl.stringFormat('solid 1px {0}', options.colour);
 
-                var grid = $('<table id="grid" cellSpacing="0" rowSpacing="0"></table>').css({ border: borderStyle });
+                var grid = $('<table id="cwd-grid" cellSpacing="0" rowSpacing="0"></table>').css({ border: borderStyle });
                 var clueNo = 1;
 
                 var newTile = function(row, col) {
-                    return $(impl.stringFormat('<td class="tile" row="{0}" col="{1}" />', row, col))
+                    return $(impl.stringFormat('<td class="cwd-tile" row="{0}" col="{1}" />', row, col))
                                 .css({ width: options.tileSize,
                                         height: options.tileSize,
                                         border: borderStyle,
@@ -63,7 +63,7 @@
                                         'vertical-align': 'top' })
                                 // Must add at least one space to get borders showing in IE7.
                                 .append(
-                                    $('<div class="tile-letter" />')
+                                    $('<div class="cwd-tile-letter" />')
                                     .text(' ')
                                     .css({ 'text-align': 'center', 'font-size': options.tileSize - 9 })
                                 );
@@ -77,17 +77,17 @@
                         var tile = newTile(i, j).appendTo(row);
 
                         if (typeof (options.gridMask[i]) !== 'undefined' && options.gridMask[i].charAt(j) === '@') {
-                            tile.addClass('tile-inactive').css('background-color', options.colour);
+                            tile.addClass('cwd-tile-inactive').css('background-color', options.colour);
                         }
                         else {
-                            tile.addClass('tile-active').css('background-color', 'White');
+                            tile.addClass('cwd-tile-active').css('background-color', 'White');
                         }
                     }
                 }
 
                 var index = 0, acrossClueIndex = 0, downClueIndex = 0;
                 // Iterate through each active tile, adding clue numbers where appropriate and build clue arrays.
-                grid.find('td.tile-active').each(function () {
+                grid.find('td.cwd-tile-active').each(function () {
                     // Work out whether it's a numbered tile
                     var i = parseInt($(this).attr('row')), j = parseInt($(this).attr('col'));
 
@@ -103,7 +103,7 @@
                     if (acrossNo) {
                         while (col < gridSize.width) {
                             var thisTile = grid.find(impl.stringFormat('td[row={0}][col={1}]', row, col));
-                            if (thisTile.hasClass('tile-inactive')) {
+                            if (thisTile.hasClass('cwd-tile-inactive')) {
                                 break;
                             }
                             else {
@@ -123,7 +123,7 @@
                     if (downNo) {
                         while (row < gridSize.height) {
                             var thisTile = grid.find(impl.stringFormat('td[row={0}][col={1}]', row, col));
-                            if (thisTile.hasClass('tile-inactive')) {
+                            if (thisTile.hasClass('cwd-tile-inactive')) {
                                 break;
                             }
                             else {
@@ -141,9 +141,9 @@
                     if (acrossNo || downNo) {
                         // Add a clue number label to the tile.
                         $(this).prepend(
-                            $('<span class="clue-no" />')
-                                            .text(clueNo++)
-                                            .css({ 'position': 'absolute', 'font-size': options.tileSize / 3 })
+                            $('<span />')
+                                .text(clueNo++)
+                                .css({ 'position': 'absolute', 'font-size': options.tileSize / 3 })
                         );
                     }
                 });
@@ -166,7 +166,7 @@
 
                 // Attach a clue box?
                 var clueBox = options.clueBox === true ?
-                        $('<div id="clueBox" />').css({
+                        $('<div id="cwd-clueBox" />').css({
                             padding: '5px',
                             'margin-top': '5px',
                             border: borderStyle,
@@ -180,17 +180,17 @@
                             'font-weight': 'bold',
                             height: '50px'
                         })
-                        .append('<span id="clueBoxText" />') : '';
+                        .append('<span id="cwd-clueBoxText" />') : '';
 
                 // Add the grid into the DOM.
-                $('<div id="divGrid" />')
+                $('<div id="cwd-divGrid" />')
                     .append(grid)
                     .append(clueBox)
                     .appendTo(data)
                     .css({ display: "inline-block", width: grid.width() });
 
                     // Align tile letters vertically.
-                    $('.tile-letter').each(function() {
+                    $('.cwd-tile-letter').each(function() {
                         $(this).text('A');
                         $(this).css('margin-top', (options.tileSize - $(this).height()) / 2);
                         $(this).text(' ');
@@ -284,12 +284,12 @@
             bindEvents: function () {
                 var s = this;
 
-                $('#grid td.tile-active').click(function () {
+                $('#cwd-grid td.cwd-tile-active').click(function () {
                     var prevDirection = '';
                     // Record which direction the clue is currently hightlighted in, if any.
-                    if ($(this).hasClass('tile-highlight')) {
-                        prevDirection = $(this).prev('td.tile-active').hasClass('tile-highlight') ||
-                                   $(this).next('td.tile-active').hasClass('tile-highlight') ? 'a' : 'd';
+                    if ($(this).hasClass('cwd-tile-highlight')) {
+                        prevDirection = $(this).prev('td.cwd-tile-active').hasClass('cwd-tile-highlight') ||
+                                   $(this).next('td.cwd-tile-active').hasClass('cwd-tile-highlight') ? 'a' : 'd';
                     }
                     // Determine the ID of the clue to highlight (may be none).
                     var acrossClueId = $(this).attr('acrossClueId');
@@ -309,15 +309,15 @@
                     impl.showClue(clueId);
                 });
 
-                $('#clues span[id^=clueText-]').click(function () {
+                $('#cwd-clues span[id^=cwd-clueText-]').click(function () {
                     var clueId = -1;
-                    if (!$(this).hasClass('clue-highlight')) {
+                    if (!$(this).hasClass('cwd-clue-highlight')) {
                         clueId = parseInt($(this).attr('id').substring(9));
                     }
                     impl.showClue(clueId);
                 });
 
-                $('#grid td.tile-active').mousedown(function (event) {
+                $('#cwd-grid td.cwd-tile-active').mousedown(function (event) {
                     //if (event.which === 3) {
                     // Right-click
                     //    alert('rclick');
@@ -325,7 +325,7 @@
                 });
 
                 $(document).keydown(function (event) {
-                    var highlightedTiles = $('#grid td.tile-highlight');
+                    var highlightedTiles = $('#cwd-grid td.cwd-tile-highlight');
 
                     if (highlightedTiles.length > 0) {
                         event = event ? event : window.event;
@@ -343,25 +343,25 @@
                             if (cursorIndex > 1 ||
                                     (cursorIndex > 0 && highlightedTiles
                                         .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex-1))
-                                        .find('div.tile-letter')
+                                        .find('div.cwd-tile-letter')
                                         .attr(oppDirection) !== 'true')) {
-                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex--)).removeClass('tile-cursor');
+                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex--)).removeClass('cwd-tile-cursor');
                                 // Don't delete tile letters that have been filled in as part of another clue.
                                 while (cursorIndex > 0 &&
                                     highlightedTiles
                                         .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
-                                        .find('div.tile-letter')
+                                        .find('div.cwd-tile-letter')
                                         .attr(oppDirection) === 'true') {
                                     cursorIndex--;
                                 }
                                 highlightedTiles
                                     .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
-                                    .addClass('tile-cursor')
-                                    .find('div.tile-letter')
+                                    .addClass('cwd-tile-cursor')
+                                    .find('div.cwd-tile-letter')
                                     .not(impl.stringFormat('[{0}=true]', oppDirection))
                                     .text(' ')
                                     .removeAttr(direction);
-                                highlightedTiles.removeClass('tile-correct').removeClass('tile-incorrect');
+                                highlightedTiles.removeClass('cwd-tile-correct').removeClass('cwd-tile-incorrect');
                             }
                         }
                         else {
@@ -370,18 +370,18 @@
 
                             if (/[A-Z]/i.test(charEntered)) {
                                 // Write the entered letter into the tile.
-                                $('.tile-letter', highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)))
+                                $('.cwd-tile-letter', highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)))
                                     .text(charEntered)
                                     .attr(direction, 'true');
                                 // Move the 'cursor' on.
-                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex++)).removeClass('tile-cursor');
+                                highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex++)).removeClass('cwd-tile-cursor');
                                 // Move the cursor past any squares that have been written into already.
                                 while (cursorIndex < highlightedTiles.length &&
-                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).find('div.tile-letter').text() !== ' ') {
+                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).find('div.cwd-tile-letter').text() !== ' ') {
                                     cursorIndex++;
                                 }
                                 if (cursorIndex < highlightedTiles.length) {
-                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).addClass('tile-cursor');
+                                    highlightedTiles.filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex)).addClass('cwd-tile-cursor');
                                 }
                                 else {
                                     // Answer filled in - validate it, if appropriate.
@@ -391,7 +391,7 @@
                                         for (i = 0; i < highlightedTiles.length; i++) {
                                             var letter = highlightedTiles
                                                             .filter(impl.stringFormat('[cursorIndex={0}]', i))
-                                                            .find('div.tile-letter')
+                                                            .find('div.cwd-tile-letter')
                                                             .text();
                                             enteredAnswer = enteredAnswer.concat(letter);
                                         }
@@ -410,16 +410,16 @@
                                         var actualAnswer = clue ? clue.answer : null;
 
                                         // If there was an answer supplied, validate it.
-                                        var tilesToHighlight = options.validateAnswer === 'clue' ? highlightedTiles : $('.tile-active');
+                                        var tilesToHighlight = options.validateAnswer === 'clue' ? highlightedTiles : $('.cwd-tile-active');
                                         if (actualAnswer) {
                                             if (actualAnswer.toUpperCase() === enteredAnswer) {
-                                                tilesToHighlight.addClass('tile-correct');
+                                                tilesToHighlight.addClass('cwd-tile-correct');
                                                 setTimeout(function () {
-                                                    tilesToHighlight.removeClass('tile-correct');
+                                                    tilesToHighlight.removeClass('cwd-tile-correct');
                                                 }, 1500);
                                             }
                                             else {
-                                                tilesToHighlight.addClass('tile-incorrect');
+                                                tilesToHighlight.addClass('cwd-tile-incorrect');
                                             }
                                         }
                                     }
@@ -435,7 +435,7 @@
 
             isGridCompleted: function() {
                 // Return true if all active tiles have a letter entered into them.
-                return $('.tile-active').find('.tile-letter').filter(function() {
+                return $('.cwd-tile-active').find('.cwd-tile-letter').filter(function() {
                     return $(this).text() === ' ';
                 }).length === 0;
             },
@@ -471,7 +471,7 @@
 
             appendClues: function (data, onRight) {
                 var displayStyle = onRight ? "inline-block" : "block";
-                var cluesDiv = $(impl.stringFormat('<div id="clues" class="clues" style="vertical-align: top; display: {0}" />', displayStyle));
+                var cluesDiv = $(impl.stringFormat('<div id="cwd-clues" style="vertical-align: top; display: {0}" />', displayStyle));
                 var missingClue = '<span style="color: red;">Missing clue</span>';
                 var clueHeader = function(label) {
                     return $('<div />').css({
@@ -482,42 +482,39 @@
                     }).text(label);
                 };
 
+                var addClues = function(clueArray) {
+                    $.each(clueArray, function (index, clue) {
+                        cluesDiv.append(impl.stringFormat(
+                                        '<div><span><b>{0}</b></span><span id="cwd-clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
+                                        clue.number,
+                                        clue.id,
+                                        clue.text ? clue.text : missingClue,
+                                        clue.pattern ? clue.pattern : ''));
+                    });
+                };
+
                 // Across clues.
                 clueHeader('ACROSS').appendTo(cluesDiv);
                 var acrossClues = impl.findCluesByDirection('a');
-                $.each(acrossClues, function (index, clue) {
-                    cluesDiv.append(impl.stringFormat(
-                                    '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
-                                    clue.number,
-                                    clue.id,
-                                    clue.text ? clue.text : missingClue,
-                                    clue.pattern ? clue.pattern : ''));
-                });
+                addClues(acrossClues);
 
                 // Down clues.
                 clueHeader('DOWN').appendTo(cluesDiv);
                 var downClues = impl.findCluesByDirection('d');
-                $.each(downClues, function (index, clue) {
-                    cluesDiv.append(impl.stringFormat(
-                                    '<div><span><b>{0}</b></span><span id="clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
-                                    clue.number,
-                                    clue.id,
-                                    clue.text ? clue.text : missingClue,
-                                    clue.pattern ? clue.pattern : ''));
-                });
+                addClues(downClues);
 
-                var width = onRight ? '' : $('#divGrid').width();
+                var width = onRight ? '' : $('#cwd-divGrid').width();
                 cluesDiv.outerWidth(width).appendTo(data);
                 impl.columniseClues(onRight);
             },
 
             showClue: function (clueId) {
                 // Remove highlighting from previously highlighted tiles.
-                $('#grid td.tile-highlight').removeClass('tile-highlight');
-                $('#grid td.tile-cursor').removeClass('tile-cursor');
+                $('#cwd-grid td.cwd-tile-highlight').removeClass('cwd-tile-highlight');
+                $('#cwd-grid td.cwd-tile-cursor').removeClass('cwd-tile-cursor');
                 // Remove highlighting from previously highlighted clue texts.
-                $('#clues span.clue-highlight').removeClass('clue-highlight');
-                $('#clueBox span').fadeOut('fast');
+                $('#cwd-clues span.cwd-clue-highlight').removeClass('cwd-clue-highlight');
+                $('#cwd-clueBox span').fadeOut('fast');
 
                 clueId = clueId ? clueId : -1;
 
@@ -526,12 +523,12 @@
 
                     $.each(clueIds, function (index, value) {
                         // Highlight corresponding clue text(s).
-                        var clue = $(impl.stringFormat('#clues span#clueText-{0}', value)).addClass('clue-highlight');
+                        var clue = $(impl.stringFormat('#cwd-clues span#cwd-clueText-{0}', value)).addClass('cwd-clue-highlight');
                         // Put the root clue text into the clue box.
                         if (index === 0) {
-                            $('#clueBox span').fadeOut('fast', function () {
-                                $('#clueBox span').text(clue.text());
-                                $('#clueBox span').fadeIn('fast');
+                            $('#cwd-clueBox span').fadeOut('fast', function () {
+                                $('#cwd-clueBox span').text(clue.text());
+                                $('#cwd-clueBox span').fadeIn('fast');
                             });
                         }
                     });
@@ -556,50 +553,50 @@
                     switch (rootClue.direction) {
                         case 'a':
                             // Highlight the across clue.
-                            $(impl.stringFormat('#grid td[acrossClueId={0}]', rootClue.id))
-                                    .addClass('tile-highlight')
+                            $(impl.stringFormat('#cwd-grid td[acrossClueId={0}]', rootClue.id))
+                                    .addClass('cwd-tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                             break;
 
                         case 'd':
                             // Highlight the down clue.
-                            $(impl.stringFormat('#grid td[downClueId={0}]', rootClue.id))
-                                    .addClass('tile-highlight')
+                            $(impl.stringFormat('#cwd-grid td[downClueId={0}]', rootClue.id))
+                                    .addClass('cwd-tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                             break;
                     }
 
                     // Also highlight any sub-clues.
                     $.each(subClueIds, function (index, subClueId) {
-                        $(impl.stringFormat('#grid td[acrossClueId={0}]', subClueId))
-                                .add(impl.stringFormat('#grid td[downClueId={0}]', subClueId))
-                                    .addClass('tile-highlight')
+                        $(impl.stringFormat('#cwd-grid td[acrossClueId={0}]', subClueId))
+                                .add(impl.stringFormat('#cwd-grid td[downClueId={0}]', subClueId))
+                                    .addClass('cwd-tile-highlight')
                                     .each(function (index, value) { $(this).attr('cursorIndex', cursorIndex++); });
                     });
 
                     // Find the first highlighted tile without a filled in letter, and put the cursor there.
-                    var highlightedTiles = $('#grid td.tile-highlight');
+                    var highlightedTiles = $('#cwd-grid td.cwd-tile-highlight');
                     cursorIndex = 0;
                     while (cursorIndex < highlightedTiles.length &&
                             highlightedTiles
                                 .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
-                                .find('div.tile-letter').text() !== ' ') {
+                                .find('div.cwd-tile-letter').text() !== ' ') {
                         cursorIndex++;
                     }
                     highlightedTiles
                         .filter(impl.stringFormat('[cursorIndex={0}]', cursorIndex))
-                        .addClass('tile-cursor');
+                        .addClass('cwd-tile-cursor');
                 }
 
                 return [rootClue.id].concat(subClueIds);
             },
 
             columniseClues: function (onRight) {
-                var cluesDiv = $('#clues');
+                var cluesDiv = $('#cwd-clues');
                 var columnWidth = (cluesDiv.width() / 2) - 5;
 
                 var getNewColumn = function (number) {
-                    return $(impl.stringFormat('<div id="col{0}" style="position: relative; display: inline-table; vertical-align: top; width: {1};" />', number, columnWidth));
+                    return $(impl.stringFormat('<div id="cwd-col{0}" style="position: relative; display: inline-table; vertical-align: top; width: {1};" />', number, columnWidth));
                 }
 
                 var colDivs = [];
@@ -611,7 +608,7 @@
 
                 cluesDiv.append(colDivs[0]);
 
-                var columnHeight = onRight === true ? $('#divGrid').outerHeight() : colDivs[0].height() / 2;
+                var columnHeight = onRight === true ? $('#cwd-divGrid').outerHeight() : colDivs[0].height() / 2;
                 var col = 1, done = false;
 
                 while (!done) {
