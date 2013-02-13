@@ -68,7 +68,7 @@ which will render as:
 
 ####Multi-clues
 
-Multi-clues (where a clue's answer is filled in over more than one clue space in the grid) are catered for. To achieve this, specify an ID code for each 'sub-clue' and then reference them in the 'root clue' inside double square brackets. For example:
+Multi-clues (where a clue's answer is filled in over more than one clue space in the grid) are catered for. To achieve this, specify an ID code for each 'sub-clue' inside double square brackets and then reference them in the 'root clue', delimited by "++". For example:
 
 ```javascript
 var clues = ["City containing the borough of Manhattan++SUBCLUE1%%NEW YORK",
