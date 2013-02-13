@@ -1,24 +1,24 @@
-#grid td.tile-highlight
+#cwd-grid td.cwd-tile-highlight
 {
     background-color: Yellow !important;
 }
 
-#grid td.tile-cursor
+#cwd-grid td.cwd-tile-cursor
 {
     border-color: White !important;
 }
 
-#grid td.tile-correct
+#cwd-grid td.cwd-tile-correct
 {
     background-color: Lime !important;
 }
 
-#grid td.tile-incorrect
+#cwd-grid td.cwd-tile-incorrect
 {
     border-color: Red !important; 
 }
 
-.clue-highlight
+.cwd-clue-highlight
 {
     font-weight: bold;
 }
