@@ -76,11 +76,11 @@
                     for (j = 0; j < gridSize.width; j++) {
                         var tile = newTile(i, j).appendTo(row);
 
-                        if (typeof (options.gridMask[i]) !== 'undefined' && options.gridMask[i].charAt(j) === '@') {
-                            tile.addClass('cwd-tile-inactive').css('background-color', options.colour);
+                        if (typeof (options.gridMask[i]) !== 'undefined' && options.gridMask[i].charAt(j) === ' ') {
+                            tile.addClass('cwd-tile-active').css('background-color', 'White');
                         }
                         else {
-                            tile.addClass('cwd-tile-active').css('background-color', 'White');
+                            tile.addClass('cwd-tile-inactive').css('background-color', options.colour);
                         }
                     }
                 }
@@ -92,12 +92,12 @@
                     var i = parseInt($(this).attr('row')), j = parseInt($(this).attr('col'));
 
                     // Inactive tile to left (or edge) AND active tile to right => start of across clue.
-                    var acrossNo = (j === 0 || options.gridMask[i].charAt(j - 1) === '@') &&
-                                (j < gridSize.width - 1 && options.gridMask[i].charAt(j + 1) !== '@')
+                    var acrossNo = (j === 0 || options.gridMask[i].charAt(j - 1) !== ' ') &&
+                                (j < gridSize.width - 1 && options.gridMask[i].charAt(j + 1) === ' ')
 
                     // Inactive tile above (or edge) AND active tile below => start of down clue.
-                    var downNo = (i === 0 || options.gridMask[i - 1].charAt(j) === '@') &&
-                                (i < gridSize.height - 1 && options.gridMask[i + 1].charAt(j) !== '@')
+                    var downNo = (i === 0 || options.gridMask[i - 1].charAt(j) !== ' ') &&
+                                (i < gridSize.height - 1 && options.gridMask[i + 1].charAt(j) === ' ')
 
                     var row = i, col = j;
                     if (acrossNo) {
