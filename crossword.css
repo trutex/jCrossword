@@ -1,3 +1,11 @@
+#cwd-container {
+    font-family: tahoma;
+}
+
+#cwd-grid {
+    border: solid 1px black;
+}
+
 #cwd-grid td.cwd-tile-highlight
 {
     background-color: Yellow !important;
@@ -6,6 +14,8 @@
 #cwd-grid td.cwd-tile-cursor
 {
     border-color: White !important;
+    background-color: darkgray !important;
+    color: white;
 }
 
 #cwd-grid td.cwd-tile-correct
@@ -18,7 +28,39 @@
     border-color: Red !important; 
 }
 
+.cwd-tile {
+    width: 25px;
+    height: 25px;
+    border: solid 1px black;
+    padding: 0;
+    vertical-align: top;
+}
+
+.cwd-tile-letter {
+    text-align: center;
+    font-size: 16px; 
+}
+
 .cwd-clue-highlight
 {
     font-weight: bold;
+}
+
+.cwd-clues-header {
+    font-size: 105%;
+    font-weight: bold;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.cwd-clue div {
+    display: table-cell;
+}
+
+.cwd-clue-no {
+    width: 25px;
+}
+
+.cwd-clue-text {
+    cursor: pointer;
 }
