@@ -51,21 +51,14 @@
                 options.downClues = options.downClues ? options.downClues : [];
                 var borderStyle = impl.stringFormat('solid 1px {0}', options.colour);
 
-                var grid = $('<table id="cwd-grid" cellSpacing="0" rowSpacing="0"></table>').css({ border: borderStyle });
+                var grid = $('<table id="cwd-grid" cellSpacing="0" rowSpacing="0"></table>');
                 var clueNo = 1;
 
                 var newTile = function(row, col) {
                     return $(impl.stringFormat('<td class="cwd-tile" row="{0}" col="{1}" />', row, col))
-                                .css({ width: options.tileSize,
-                                        height: options.tileSize,
-                                        border: borderStyle,
-                                        padding: '0px',
-                                        'vertical-align': 'top' })
                                 // Must add at least one space to get borders showing in IE7.
                                 .append(
-                                    $('<div class="cwd-tile-letter" />')
-                                    .text(' ')
-                                    .css({ 'text-align': 'center', 'font-size': options.tileSize - 9 })
+                                    $('<div class="cwd-tile-letter" />').text(' ')
                                 );
                 }
 
@@ -183,10 +176,13 @@
                         .append('<span id="cwd-clueBoxText" />') : '';
 
                 // Add the grid into the DOM.
+                
+                var container = $('<div />').attr('id', 'cwd-container').appendTo(data);
+                
                 $('<div id="cwd-divGrid" />')
                     .append(grid)
                     .append(clueBox)
-                    .appendTo(data)
+                    .appendTo(container)
                     .css({ display: "inline-block", width: grid.width() });
 
                     // Align tile letters vertically.
@@ -309,10 +305,10 @@
                     impl.showClue(clueId);
                 });
 
-                $('#cwd-clues span[id^=cwd-clueText-]').click(function () {
+                $('#cwd-clues .cwd-clue-text').click(function () {
                     var clueId = -1;
                     if (!$(this).hasClass('cwd-clue-highlight')) {
-                        clueId = parseInt($(this).attr('id').substring(9));
+                        clueId = parseInt($(this).attr('id').substring(13));
                     }
                     impl.showClue(clueId);
                 });
@@ -505,18 +501,13 @@
                 var cluesDiv = $(impl.stringFormat('<div id="cwd-clues" style="vertical-align: top; display: {0}" />', displayStyle));
                 var missingClue = '<span style="color: red;">Missing clue</span>';
                 var clueHeader = function(label) {
-                    return $('<div />').css({
-                        'font-size': '105%',
-                        'font-weight': 'bold',
-                        'padding-top': '5px',
-                        'padding-bottom': '5px'
-                    }).text(label);
+                    return $('<div />').addClass('cwd-clues-header').text(label);
                 };
 
                 var addClues = function(clueArray) {
                     $.each(clueArray, function (index, clue) {
                         cluesDiv.append(impl.stringFormat(
-                                        '<div><span><b>{0}</b></span><span id="cwd-clueText-{1}" style="cursor: pointer"> {2} {3}</span></div>',
+                                        '<div class="cwd-clue"><div class="cwd-clue-no"><b>{0}</b></div><div id="cwd-clueText-{1}" class="cwd-clue-text"> {2} {3}</div></div>',
                                         clue.number,
                                         clue.id,
                                         clue.text ? clue.text : missingClue,
@@ -535,7 +526,7 @@
                 addClues(downClues);
 
                 var width = onRight ? '' : $('#cwd-divGrid').width();
-                cluesDiv.outerWidth(width).appendTo(data);
+                cluesDiv.outerWidth(width).appendTo($('#cwd-container'));
                 impl.columniseClues(onRight);
             },
 
@@ -552,9 +543,10 @@
                 if (clueId >= 0) {
                     var clueIds = impl.highlightTiles(clueId);
 
+                    $('.cwd-clue-highlight').removeClass('cwd-clue-highlight');
                     $.each(clueIds, function (index, value) {
                         // Highlight corresponding clue text(s).
-                        var clue = $(impl.stringFormat('#cwd-clues span#cwd-clueText-{0}', value)).addClass('cwd-clue-highlight');
+                        var clue = $(impl.stringFormat('#cwd-clues #cwd-clueText-{0}', value)).addClass('cwd-clue-highlight');
                         // Put the root clue text into the clue box.
                         if (index === 0) {
                             $('#cwd-clueBox span').fadeOut('fast', function () {
