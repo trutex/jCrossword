@@ -41,6 +41,15 @@
     font-size: 16px; 
 }
 
+#cwd-clue-box {
+    padding: 5px;
+    margin-top: 5px;
+    border: solid 1px black;
+    font-size: 105%;
+    font-weight: bold;
+    height: 50px;
+}
+
 .cwd-clue-highlight
 {
     font-weight: bold;
