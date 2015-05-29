@@ -159,21 +159,8 @@
 
                 // Attach a clue box?
                 var clueBox = options.clueBox === true ?
-                        $('<div id="cwd-clueBox" />').css({
-                            padding: '5px',
-                            'margin-top': '5px',
-                            border: borderStyle,
-                            '-moz-border-radius': '8px',
-                            '-webkit-border-radius': '8px',
-                            '-o-border-radius': '8px',
-                            '-ms-border-radius': '8px',
-                            '-khtml-border-radius': '8px',
-                            'border-radius': '8px',
-                            'font-size': '105%',
-                            'font-weight': 'bold',
-                            height: '50px'
-                        })
-                        .append('<span id="cwd-clueBoxText" />') : '';
+                        $('<div id="cwd-clue-box" />')
+                            .append('<span id="cwd-clue-box-text" />') : '';
 
                 // Add the grid into the DOM.
                 
@@ -536,7 +523,7 @@
                 $('#cwd-grid td.cwd-tile-cursor').removeClass('cwd-tile-cursor');
                 // Remove highlighting from previously highlighted clue texts.
                 $('#cwd-clues span.cwd-clue-highlight').removeClass('cwd-clue-highlight');
-                $('#cwd-clueBox span').fadeOut('fast');
+                $('#cwd-clue-box-text').fadeOut('fast');
 
                 clueId = clueId ? clueId : -1;
 
@@ -549,9 +536,9 @@
                         var clue = $(impl.stringFormat('#cwd-clues #cwd-clueText-{0}', value)).addClass('cwd-clue-highlight');
                         // Put the root clue text into the clue box.
                         if (index === 0) {
-                            $('#cwd-clueBox span').fadeOut('fast', function () {
-                                $('#cwd-clueBox span').text(clue.text());
-                                $('#cwd-clueBox span').fadeIn('fast');
+                            $('#cwd-clue-box-text').fadeOut('fast', function () {
+                                $('#cwd-clue-box-text').text(clue.text());
+                                $('#cwd-clue-box-text').fadeIn('fast');
                             });
                         }
                     });
