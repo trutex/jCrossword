@@ -3,6 +3,8 @@
 A jQuery plugin to show a fully interactive crossword widget on your page. The minimum information you need to supply is a string array representing the grid layout, and two arrays (of either objects or strings) representing the across and down clues.
 Clue numbers will automatically be added into the grid and to each appropriate clue when the grid and clues are rendered.
 
+[Demo](http://stuartsaunderson.co.uk/crossword.html)
+
 ####Grid
 
 Each string in the array representing the grid maps a row in the grid; a space character represents an empty tile (where letters are to be filled in), and any character other than a space represents an inactive tile. For example, the following array will render as a 3x3 grid, with three letter clues around the outside:
